@@ -1,0 +1,4 @@
+[debug] "not up to date. inChanged = true, force = false
+[debug] Updating ProjectRef(uri("file:/Users/valentingarnier/Documents/EPFL/MA2/DataScience/Systems_DS/Milestone3/"), "milestone3")...
+[debug] Done updating ProjectRef(uri("file:/Users/valentingarnier/Documents/EPFL/MA2/DataScience/Systems_DS/Milestone3/"), "milestone3")
+[warn] There may be incompatibilities among your library dependencies; run 'evicted' to see detailed eviction warnings.
