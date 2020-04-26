@@ -108,5 +108,16 @@ object Milestone3 {
     }.filter(x => x._1._1 >= startId && x._1._1 <= endId)
 
     allData.collect.foreach(println)
+
+    //===========================================================================
+    val regex = """Container: container_e02_1580812675067_(\d{4})_(\d{2})_(\d{6}).+(((.+\n)|(\s+))+?)End of LogType:stderr""".r
+
+    def parseLogFile(log: String): Iterator[(String, String, String, String)] = {
+      regex.findAllMatchIn(log).map(m => (m.group(1), m.group(2), m.group(3), m.group(4)))
+    }
+
+    val rdd = sc.wholeTextFiles("test.log").flatMap{case (_, txt) => parseLogFile(txt)}
+
+    rdd.foreach(println)
   }
 }
