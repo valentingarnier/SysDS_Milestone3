@@ -6,7 +6,7 @@ object Milestone3 {
     val conf = new SparkConf().setMaster("local[*]").setAppName("Milestone3")
     val sc = SparkContext.getOrCreate(conf)
 
-    val resourceManager = args(0)
+    /*val resourceManager = args(0)
     //val appLogs = args(1)
     val startId = args(1)
     val endId = args(2)
@@ -107,17 +107,41 @@ object Milestone3 {
       case (key, values) => ((key, values._2, values._1._1), values._1._2)
     }.filter(x => x._1._1 >= startId && x._1._1 <= endId)
 
-    allData.collect.foreach(println)
+    allData.collect.foreach(println)*/
 
     //===========================================================================
     val regex = """Container: container_e02_1580812675067_(\d{4})_(\d{2})_(\d{6}).+(((.+\n)|(\s+))+?)End of LogType:stderr""".r
 
-    def parseLogFile(log: String): Iterator[(String, String, String, String)] = {
-      regex.findAllMatchIn(log).map(m => (m.group(1), m.group(2), m.group(3), m.group(4)))
+    def parseLogFile(log: String): Iterator[((String, String), String, String)] = {
+      regex.findAllMatchIn(log).map(m => ((m.group(1) -> m.group(2)), m.group(3), m.group(4)))
     }
 
     val rdd = sc.wholeTextFiles("test.log").flatMap{case (_, txt) => parseLogFile(txt)}
+    val logs = rdd.groupBy(_._1).mapValues(_.toList.map(tuple => tuple._2 -> tuple._3).map {
+      case ("000001", txtDriver) => parseAppLog(txtDriver)
+      case (_, txtExecutor) => parseExecutor(txtExecutor)
+    })
+    logs.foreach(println)
+  }
 
-    rdd.foreach(println)
+  def parseAppLog(txtDriver: String): (String, String, String, String) = {
+      val firstRegex = """.+INFO ApplicationMaster: ApplicationAttemptId: appattempt_1580812675067_(\d{4}).+(.+\n){4}.+INFO SparkContext: Submitted application: M2 (.+)""".r
+      val lineDag = """.+INFO DAGScheduler: ResultStage.(\d).+?(\d{2}).+container_e02_1580812675067_\d{4}_\d{2}_(\d{6})""".r
+
+      val it1 = firstRegex.findAllMatchIn(txtDriver).map(m => (m.group(1), m.group(3)))
+      val it2 = lineDag.findAllMatchIn(txtDriver).map(m => (m.group(1), m.group(2), m.group(3)))
+
+      val appId = it1.toList.head._1
+
+      val elem = it2.next()
+      val stage = elem._1
+      val lineError = elem._2
+      val faultyContainer = elem._3
+
+      (appId, lineError, stage, faultyContainer)
+  }
+
+  def parseExecutor(txtExecutor: String): (String, String) = {
+    ("", "")
   }
 }

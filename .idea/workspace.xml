@@ -4,29 +4,6 @@
     <list default="true" id="08030320-f790-4267-8de6-abd29142f780" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/Milestone3.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/Milestone3.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$10.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$11.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$12.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$13.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$14.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$15.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$16.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$17.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$18.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$2$$anonfun$apply$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$3.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$4.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$5$$anonfun$apply$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$5.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$6.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$7.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$8$$anonfun$apply$3.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$8.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$9.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$main$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$$anonfun$main$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/scala-2.11/classes/Milestone3$.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +36,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
@@ -111,7 +89,7 @@
     </option>
     <option name="modificationStamps">
       <map>
-        <entry key="$PROJECT_DIR$" value="3173479605968" />
+        <entry key="$PROJECT_DIR$" value="3173211508525" />
         <entry key="$PROJECT_DIR$/build.sbt" value="313932304" />
         <entry key="$PROJECT_DIR$/project/build.properties" value="1026143456" />
       </map>
@@ -135,6 +113,7 @@
       <workItem from="1586530830570" duration="1125000" />
       <workItem from="1586680056997" duration="3665000" />
       <workItem from="1586698361353" duration="3797000" />
+      <workItem from="1587976756539" duration="6344000" />
     </task>
     <servers />
   </component>
@@ -150,22 +129,26 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="390" y="383" key="#com.intellij.framework.addSupport.AddSupportForSingleFrameworkDialog/0.23.1440.877@0.23.1440.877" timestamp="1586531960952" />
-    <state width="1398" height="230" key="GridCell.Tab.0.bottom" timestamp="1587918814086">
+    <state width="1398" height="230" key="GridCell.Tab.0.bottom" timestamp="1587983808968">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1398" height="230" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1587918814086" />
-    <state width="1398" height="230" key="GridCell.Tab.0.center" timestamp="1587918814085">
+    <state width="1398" height="230" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1587983808968" />
+    <state width="1398" height="230" key="GridCell.Tab.0.center" timestamp="1587983808967">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1398" height="230" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1587918814085" />
-    <state width="1398" height="230" key="GridCell.Tab.0.left" timestamp="1587918814084">
+    <state width="1398" height="230" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1587983808967" />
+    <state width="1398" height="230" key="GridCell.Tab.0.left" timestamp="1587983808966">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1398" height="230" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1587918814084" />
-    <state width="1398" height="230" key="GridCell.Tab.0.right" timestamp="1587918814085">
+    <state width="1398" height="230" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1587983808966" />
+    <state width="1398" height="230" key="GridCell.Tab.0.right" timestamp="1587983808967">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1398" height="230" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1587918814085" />
+    <state width="1398" height="230" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1587983808967" />
+    <state x="207" y="211" key="IDE.errors.dialog" timestamp="1587979716190">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="207" y="211" key="IDE.errors.dialog/0.23.1440.877@0.23.1440.877" timestamp="1587979716190" />
     <state x="540" y="241" key="run.anything.popup" timestamp="1587479759463">
       <screen x="0" y="0" width="1920" height="2090" />
     </state>
