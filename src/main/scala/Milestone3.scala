@@ -143,19 +143,33 @@ object Milestone3 {
 
       def getErrorInfo(keyWord: String, appName: String, txt: String): (String, Int, Int) = { //(ErrorType, ErrorCodeLine, -1 if unknown |0 if error from scala|1 if error from spark)
         val errorThread = txt.split(keyWord)(1).split("""\d{2}/\d{2}/\d{2}\s\d{2}:\d{2}:\d{2}""".r.toString())(0).split("\n").toList
+        println(errorThread)
         val errorType = errorThread(1).split(":")(0)
 
         val regex_codeLine = (""".+at\s""" + appName + """\$\$anonfun\$\d+\.apply\(""" + appName + """\.scala:(\d+)\)""").r
+        val regex_codeLine_2 = (""".+at\s""" + appName + """\$\.main\(""" + appName + """\.scala:(\d+)\)""").r
 
         def parseCodeLine(line: String): (Int) = {
           val regex_codeLine(lineNbr) = line
           (lineNbr.toInt)
         }
 
+        def parseCodeLine2(line: String): (Int) = {
+          val regex_codeLine_2(lineNbr) = line
+          (lineNbr.toInt)
+        }
+
         val lineMatch = errorThread.filter(l => l.matches(regex_codeLine.toString()))
+        val lineMatch2 = errorThread.filter(l => l.matches(regex_codeLine_2.toString()))
+
 
         lineMatch match {
-          case Nil => (errorType, -1, -1)
+          case Nil => {
+            lineMatch2 match {
+              case Nil => (errorType, -1, -1)
+              case x :: tail => (errorType, parseCodeLine2(x), -1)
+            }
+          }
           case x => {
             val header = x.head
             val codeLine = parseCodeLine(header)
@@ -169,15 +183,12 @@ object Milestone3 {
         }
       }
 
-      val driver = logs(0).split('\n').toList
+      val driver = logs.head.split('\n').toList
 
       val exception = driver.filter(l => l.matches(regex_error.toString())).map(x => parseErrAppMaster(x)).head
 
       if (exception == "java.lang.ClassNotFoundException") {
         (1, exception, -1, -1)
-      }
-      else if (exception == "org.apache.hadoop.mapred.InvalidInputException") {
-          (2, exception, -1, -1)
       }
       else {
         val appName = driver.filter(l => l.matches(regex_appName.toString())).map(x => parseAppName(x)).head
@@ -186,10 +197,15 @@ object Milestone3 {
           val scheduler_info = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x)).head
           val executor = scheduler_info._3
 
-          if (executor == -1) {
-            (4, exception, scheduler_info._1, scheduler_info._2)
-          } else {
-            val execlog = logs(executor - 1)
+          val execlog = logs(executor - 1)
+
+          if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
+            val errorInfo2 = getErrorInfo("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
+            errorInfo2 match {
+              case (errorType, codeLine, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
+            }
+          }
+          else {
             val errorInfo = getErrorInfo("ERROR Executor", appName, execlog)
             errorInfo match {
               case (errorType, -1, _) => (6, errorType, scheduler_info._1, scheduler_info._2)
@@ -198,12 +214,15 @@ object Milestone3 {
               case (errorType, codeLine, _) => (9, errorType, scheduler_info._1, codeLine)
             }
           }
+
         } else {
           val execlog = logs.head
+
           val errorInfo = getErrorInfo("ERROR ApplicationMaster", appName, execlog)
           errorInfo match {
             case (errorType, codeLine, 1) => (7, errorType, -1, codeLine)
             case (errorType, codeLine, 0) => (3, errorType, -1, codeLine)
+            case ("org.apache.hadoop.mapred.InvalidInputException", codeLine, _) => (2, "org.apache.hadoop.mapred.InvalidInputException", -1, codeLine)
             case (errorType, codeLine, _) => (9, errorType, -1, codeLine)
           }
 
