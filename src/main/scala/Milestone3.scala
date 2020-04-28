@@ -1,4 +1,5 @@
 import org.apache.spark
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.immutable.Stream.Empty
@@ -103,13 +104,11 @@ object Milestone3 {
     }
 
     /*
-    Final RDD: We join with users. AllData looks something like: ((AppId, User, AppAttempt), List(Dates, Status), List(ContainerID, Hosts)), ...)
+    Final RDD: We join with users. AllData looks something like: ((AppId, AppAttempt), (User, (StartDate, EndDate), List(ContainerID, Hosts)), ...))
      */
     val allData = datesJoinContainers.join(appUsers).map {
-      case (key, values) => ((key, values._2, values._1._1), values._1._2)
+      case (key, values) => (key, values._1._1) -> (values._2, values._1._2)
     }.filter(x => x._1._1 >= startId && x._1._1 <= endId)
-
-    //allData.collect.foreach(println)
 
     //===========================================================================
 
@@ -231,8 +230,9 @@ object Milestone3 {
       }
       .filter(x => x._2(0).contains("INFO ApplicationMaster: Final app status: FAILED"))
       .map(x => x._1 -> getError(x._2))
-    rdd.foreach(println)
 
+    val final_rdd: RDD[((Int, Int), ((String, ((String, String), List[(Int, String)])), (Int, String, Int, Int)))] = allData.join(rdd)
+    rdd.foreach(println)
     /*//===========================================================================
     val regex = """Container: container_e02_1580812675067_(\d{4})_(\d{2})_(\d{6}).+(((.+\n)|(\s+))+?)End of LogType:stderr""".r
 
