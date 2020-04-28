@@ -176,6 +176,9 @@ object Milestone3 {
       if (exception == "java.lang.ClassNotFoundException") {
         (1, exception, -1, -1)
       }
+      else if (exception == "org.apache.hadoop.mapred.InvalidInputException") {
+          (2, exception, -1, -1)
+      }
       else {
         val appName = driver.filter(l => l.matches(regex_appName.toString())).map(x => parseAppName(x)).head
 
@@ -196,7 +199,7 @@ object Milestone3 {
             }
           }
         } else {
-          val execlog = logs(0)
+          val execlog = logs.head
           val errorInfo = getErrorInfo("ERROR ApplicationMaster", appName, execlog)
           errorInfo match {
             case (errorType, codeLine, 1) => (7, errorType, -1, codeLine)
@@ -207,7 +210,6 @@ object Milestone3 {
         }
       }
     }
-
     val regex_gen = """.+container_e02_1580812675067_(\d+)_(\d+)_(\d+)\son.+""".r
 
     def parseLogFile(log: List[String]): ((Int, Int), (Int)) = {
@@ -223,50 +225,15 @@ object Milestone3 {
       .map(x => (x._1._1._1, x._1._1._2) -> (x._1._2, x._2))
       .filter(x => x._1._1 >= startId && x._1._1 <= endId)
       .groupBy(_._1)
-      .mapValues{
+      .mapValues {
         case(buff) => buff.toList.map(x => x._2)
           .sortBy(_._1)
           .map(x => x._2)
       }
-      .filter(x => x._2(0).contains("INFO ApplicationMaster: Final app status: FAILED"))
+      .filter(x => x._2.head.contains("INFO ApplicationMaster: Final app status: FAILED"))
       .map(x => x._1 -> getError(x._2))
 
     val final_rdd: RDD[((Int, Int), ((String, ((String, String), List[(Int, String)])), (Int, String, Int, Int)))] = allData.join(rdd)
     rdd.foreach(println)
-    /*//===========================================================================
-    val regex = """Container: container_e02_1580812675067_(\d{4})_(\d{2})_(\d{6}).+(((.+\n)|(\s+))+?)End of LogType:stderr""".r
-
-    def parseLogFile(log: String): Iterator[((String, String), String, String)] = {
-      regex.findAllMatchIn(log).map(m => ((m.group(1) -> m.group(2)), m.group(3), m.group(4)))
-    }
-
-    val rdd = sc.wholeTextFiles("test.log").flatMap{case (_, txt) => parseLogFile(txt)}
-    val logs = rdd.groupBy(_._1).mapValues(_.toList.map(tuple => tuple._2 -> tuple._3).map {
-      case ("000001", txtDriver) => parseAppLog(txtDriver)
-      case (_, txtExecutor) => parseExecutor(txtExecutor)
-    })
-    logs.foreach(println)
-  }
-
-  def parseAppLog(txtDriver: String): (String, String, String, String) = {
-      val firstRegex = """.+INFO ApplicationMaster: ApplicationAttemptId: appattempt_1580812675067_(\d{4}).+(.+\n){4}.+INFO SparkContext: Submitted application: M2 (.+)""".r
-      val lineDag = """.+INFO DAGScheduler: ResultStage.(\d).+?(\d{2}).+container_e02_1580812675067_\d{4}_\d{2}_(\d{6})""".r
-
-      val it1 = firstRegex.findAllMatchIn(txtDriver).map(m => (m.group(1), m.group(3)))
-      val it2 = lineDag.findAllMatchIn(txtDriver).map(m => (m.group(1), m.group(2), m.group(3)))
-
-      val appId = it1.toList.head._1
-
-      val elem = it2.next()
-      val stage = elem._1
-      val lineError = elem._2
-      val faultyContainer = elem._3
-
-      (appId, lineError, stage, faultyContainer)
-  }
-
-  def parseExecutor(txtExecutor: String): (String, String) = {
-    ("", "")
-    }*/
   }
 }
