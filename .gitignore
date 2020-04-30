@@ -1,6 +1,6 @@
-.DS_Store
-.idea/
-target/
-project/
 aggregated_application_logs.log
 resource.log
+/target/
+/project/
+/.idea/
+/hadoop-yarn-resourcemanager-iccluster040.log
