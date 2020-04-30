@@ -5,6 +5,8 @@ import org.apache.spark.{SparkConf, SparkContext}
 import scala.collection.immutable.Stream.Empty
 import scala.util.matching.Regex
 
+import java.io._
+
 object Milestone3 {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setMaster("local[*]").setAppName("Milestone3")
@@ -302,5 +304,30 @@ object Milestone3 {
     //This is why it was important to keep AppAttempt
     val final_rdd = appInfos.join(errorCategories)
     errorCategories.foreach(println)
+
+    // Writing the final_rdd to answers.txt :
+    // verify if foreach writes the rdd in the same order as it is stored
+    // verify if containers are sorted (if not, sort val containers)
+    val file = new File("answers.txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+
+    final_rdd.foreach{x =>
+      val appId = x._1._1
+      val appAttempt = x._1._2
+      bw.write("AppAttempt : appattempt_1580812675067_" + f"${appId}%04d" + "_" + f"${appAttempt}%06d" + "\n")
+      bw.write("User : " + x._2._1 + "\n")
+      bw.write("StartTime : " + x._2._1._2._1 +"\n")
+      bw.write("EndTime : " + x._2._1._2._1 + "\n")
+      val containers = x._2._1._2._2.map{x =>
+        "container_e02_1580812675067_" + f"${appId}%04d" + "_" + f"${appAttempt}%02d" + "_" + x._1 + " -> " + x._2 + "\n"}
+      bw.write("Containers : " + containers.mkString(", ") + "\n")
+      bw.write("ErrorCategory : " + x._2._2._1 + "\n")
+      bw.write("Exception : " + x._2._2._2 + "\n")
+      bw.write("Stage : " + x._2._2._3 + "\n")
+      bw.write("SourceCodeLine : " + x._2._2._4 + "\n")
+      bw.write("\n")
+    }
+
+    bw.close()
   }
 }
