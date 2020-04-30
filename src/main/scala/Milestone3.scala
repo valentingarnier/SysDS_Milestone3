@@ -217,7 +217,11 @@ object Milestone3 {
          */
           val scheduler_info = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x)).head
           //Since we know that there is a problem with an executor using the executor ID, we save the failed executor's log.
-          print(scheduler_info)
+
+          if(scheduler_info._3 == -1) {
+            (4, "test", -1, -1)
+          }
+
           val failedExecutorLog = logs(Math.max(0, scheduler_info._3 - 1))
 
           //Error while transferring data between driver and executors (category 4) always have an ERROR Utils keyword.
