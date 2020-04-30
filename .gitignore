@@ -1,5 +1,6 @@
 aggregated_application_logs.log
 resource.log
+.DS_Store
 /target/
 /project/
 /.idea/

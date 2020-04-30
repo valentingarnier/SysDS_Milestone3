@@ -113,7 +113,7 @@ object Milestone3 {
     }.filter(x => x._1._1 >= startId && x._1._1 <= endId)
 
     //========================================== WORK ON APPLICATION LOGS ==========================================
-
+    //TODO: -Categorie 4 n'est pas bien finished -Implementer la categorie 8
     /*
     These 3 regex will allow us to find insights in the driver log.
      */
