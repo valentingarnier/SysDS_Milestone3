@@ -217,24 +217,25 @@ object Milestone3 {
          */
           val scheduler_info = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x)).head
           //Since we know that there is a problem with an executor using the executor ID, we save the failed executor's log.
-
           if(scheduler_info._3 == -1) {
             (4, "test", -1, -1)
           }
 
-          val failedExecutorLog = logs(Math.max(0, scheduler_info._3 - 1))
+
 
           //Error while transferring data between driver and executors (category 4) always have an ERROR Utils keyword.
           //Category 4 is the only one that does not involve an ERROR inside an executor.
-          if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
+
+          /*if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
             //The only thing that may change is the errorType so we need errorInThread function to spot that one.
             val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
             errorInfo match {
               case (errorType, codeLine, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
             }
-          }
+          }*/
           //If we have a spark exception and it is not a category 4, we know we have to go deep inside failed executor's log.
           else {
+            val failedExecutorLog = logs(Math.max(0, scheduler_info._3 - 1))
             val errorInfo = errorInThread("ERROR Executor", appName, failedExecutorLog)
             errorInfo match {
               case (errorType, -1, _) => (6, errorType, scheduler_info._1, scheduler_info._2) //Shuffling data (cat 6)
@@ -303,13 +304,13 @@ object Milestone3 {
 
     //Now rdd is ready to be joined with the RDD that we built in Milestone1 (allData) on (AppID, AppAttempt)
     //This is why it was important to keep AppAttempt
-    val final_rdd = appInfos.join(errorCategories)
+    //val final_rdd = appInfos.join(errorCategories)
     errorCategories.foreach(println)
 
     // Writing the final_rdd to answers.txt :
     // verify if foreach writes the rdd in the same order as it is stored
     // verify if containers are sorted (if not, sort val containers)
-    val file = new File("answers.txt")
+    /*val file = new File("answers.txt")
     val bw = new BufferedWriter(new FileWriter(file))
 
     final_rdd.foreach{x =>
@@ -329,6 +330,6 @@ object Milestone3 {
       bw.write("\n")
     }
 
-    bw.close()
+    bw.close()*/
   }
 }
