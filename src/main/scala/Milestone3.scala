@@ -221,13 +221,15 @@ object Milestone3 {
         }
         val appName = list_app_name.head
 
+        val schedulerLines = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x))
+        val apacheSparkException = exception == "org.apache.spark.SparkException" || !schedulerLines.isEmpty
         //This IF separates spark related exceptions and non-spark ones.
-        if (exception == "org.apache.spark.SparkException") {
+        if (apacheSparkException) {
           /*Scheduler_info is codeLine and stage that appears in the driver (DAGScheduler).
           If we have no codeLine error or stage in executors
           We know we can return the ones present in the driver by order of priority.
          */
-          val scheduler_info = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x)).head
+          val scheduler_info = schedulerLines.head
           //Application that are like app2 contains an error Utils with an uncaught exception task result getter
           //Which results from an error while transfering data from the driver and the executors
           if (scheduler_info._3 == -1) {
