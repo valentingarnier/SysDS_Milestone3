@@ -1,12 +1,15 @@
 import java.io._
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.io.{LongWritable, Text}
+import org.apache.hadoop.mapred.TextInputFormat
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.util.matching.Regex
 
 object Milestone3 {
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf().setMaster("local[*]").setAppName("Milestone3")
+    val conf = new SparkConf().setMaster("local[*]").setAppName("Milestone3") //For cluster
     val sc = SparkContext.getOrCreate(conf)
 
     val resourceManager = args(0)
@@ -118,17 +121,18 @@ object Milestone3 {
     These 3 regex will allow us to find insights in the driver log.
      */
     val regex_error = """.+INFO ApplicationMaster: Final app status: FAILED.+\(reason:.*?:\s(.*?):.+""".r
+    val regex_error2 = """.+INFO ApplicationMaster: Final app status: FAILED.+\(reason:.*?\s(.*?).+""".r
     val regex_dag = """.+INFO DAGScheduler:.+Stage\s(\d+)\s\(.+:(\d+)\) failed in(.*)""".r
-    val regex_appName = """.+INFO SparkContext: Submitted application:.+\s(\w+)$""".r
+    val regex_appName = """.+INFO SparkContext: Submitted application:.+\s(\w+)""".r
 
     /*
     Functions to parse the regex above and to return tuples
      */
-    def parseAppName(line: String): (String) = {
+    def parseAppName(line: String): String = {
       val regex_appName(appName) = line
       appName
     }
-    def parseErrAppMaster(line: String): (String) = {
+    def parseErrAppMaster(line: String): String = {
       val regex_error(exception) = line
       exception
     }
@@ -143,7 +147,6 @@ object Milestone3 {
         (stage.toInt, lineCode.toInt, -1)
       }
     }
-
     /*
     Helper function for errorInThread
      */
@@ -151,7 +154,6 @@ object Milestone3 {
       val regex(lineNbr) = line
       lineNbr.toInt
     }
-
     /*
     Parameters: -keyword: Where to split the log to work on following lines
                 -appName:  the application's name
@@ -162,7 +164,7 @@ object Milestone3 {
       //errorThread contains all lines that follow the keyword in txt (to examine the thread)
       val errorThread = txt.split(keyword)(1).split("""\d{2}/\d{2}/\d{2}\s\d{2}:\d{2}:\d{2}""".r.toString())(0).split("\n").toList
       //Format of a error thread always have the type of error as its second line (so second element in errorThread)
-      val errorType = errorThread(1).split(":").head
+      val errorType = errorThread.tail.head.split(":").head
 
       val regex_codeLine = (""".+at\s""" + appName + """\$\$anonfun\$\d+\.apply\(""" + appName + """\.scala:(\d+)\)""").r
       val regex_codeLine2 = (""".+at\s""" + appName + """\$\.main\(""" + appName + """\.scala:(\d+)\)""").r
@@ -197,8 +199,14 @@ object Milestone3 {
     def getErrorInfos(logs: List[String]): (Int, String, Int, Int) = {
       //The log regarding the driver is always with ID 000001 and we sort it before calling the function
       val driver = logs.head.split('\n').toList
-      val exception = driver.filter(l => l.matches(regex_error.toString())).map(x => parseErrAppMaster(x)).head
-
+      val list_exception = driver.filter(l => l.matches(regex_error.toString())).map(x => parseErrAppMaster(x))
+      var exception = ""
+      if (list_exception.isEmpty) {
+        exception = "Exception"
+      }
+      else {
+        exception = list_exception.head
+      }
       /*From here we start returning elements to print for each app
 
        */
@@ -207,7 +215,11 @@ object Milestone3 {
         (1, exception, -1, -1)
       }
       else {
-        val appName = driver.filter(l => l.matches(regex_appName.toString())).map(x => parseAppName(x)).head
+        val list_app_name = driver.filter(l => l.matches(regex_appName.toString())).map(x => parseAppName(x))
+        if (list_app_name.isEmpty) {
+          return (9, exception, -1, -1)
+        }
+        val appName = list_app_name.head
 
         //This IF separates spark related exceptions and non-spark ones.
         if (exception == "org.apache.spark.SparkException") {
@@ -216,26 +228,24 @@ object Milestone3 {
           We know we can return the ones present in the driver by order of priority.
          */
           val scheduler_info = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x)).head
-          //Since we know that there is a problem with an executor using the executor ID, we save the failed executor's log.
-          if(scheduler_info._3 == -1) {
-            (4, "test", -1, -1)
+          //Application that are like app2 contains an error Utils with an uncaught exception task result getter
+          //Which results from an error while transfering data from the driver and the executors
+          if (scheduler_info._3 == -1) {
+            if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
+              val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
+              errorInfo match {
+                case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
+              }
+            }
+            else if (driver.exists(_.contains("is bigger than spark.driver.maxResultSize"))) {
+              (4, exception, scheduler_info._1, scheduler_info._2)
+            }
+            else (8, exception, scheduler_info._1, scheduler_info._2)
           }
 
-
-
-          //Error while transferring data between driver and executors (category 4) always have an ERROR Utils keyword.
-          //Category 4 is the only one that does not involve an ERROR inside an executor.
-
-          /*if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
-            //The only thing that may change is the errorType so we need errorInThread function to spot that one.
-            val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
-            errorInfo match {
-              case (errorType, codeLine, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
-            }
-          }*/
           //If we have a spark exception and it is not a category 4, we know we have to go deep inside failed executor's log.
           else {
-            val failedExecutorLog = logs(Math.max(0, scheduler_info._3 - 1))
+            val failedExecutorLog = logs(scheduler_info._3 - 1)
             val errorInfo = errorInThread("ERROR Executor", appName, failedExecutorLog)
             errorInfo match {
               case (errorType, -1, _) => (6, errorType, scheduler_info._1, scheduler_info._2) //Shuffling data (cat 6)
@@ -271,10 +281,14 @@ object Milestone3 {
       ((appId.toInt, appAttempt.toInt), container.toInt)
     }
 
+    val applogs_conf = new Configuration(sc.hadoopConfiguration)
+    applogs_conf.set("textinputformat.record.delimiter", "Container:")
+
     //Here we parse the big aggregated log file.
-    val errorCategories = sc.wholeTextFiles(appLogs)
+    sc.hadoopConfiguration.set("textinputformat.record.delimiter", "Container:")
+    val errorCategories = sc.textFile(appLogs)
       //Split on each containers
-      .flatMap{case (_, txt) => txt.split("Container:")}.filter(!_.isEmpty)
+      .filter(!_.isEmpty)
       //Now we have an RDD with a string containing the log for each container.
       //map it to each line inside the string
       .map(x => x.split("\n").toList)
@@ -284,6 +298,7 @@ object Milestone3 {
       .map(x => (x._1._1._1, x._1._1._2) -> (x._1._2, x._2))
       //Take only the one that we are interested in
       .filter(x => x._1._1 >= startId && x._1._1 <= endId)
+      //Voir avec 4275
       //GroupBy AppID, AppAttempt.
       .groupBy(_._1)
       //Now for each (containerID, containerLog)
@@ -297,7 +312,7 @@ object Milestone3 {
             .map(x => x._2)
       }
       //Here we have RDD[(AppID, AppAttempt), List(DriverLog, Executor1Log ...)]
-      //Take only the ones who failed
+      //Take only the ones who failed based on the driver
       .filter(x => x._2.head.contains("INFO ApplicationMaster: Final app status: FAILED"))
       //Use our big functions above to gather all the required informations
       .map(x => x._1 -> getErrorInfos(x._2))
@@ -306,6 +321,13 @@ object Milestone3 {
     //This is why it was important to keep AppAttempt
     //val final_rdd = appInfos.join(errorCategories)
     errorCategories.foreach(println)
+
+
+
+
+    //====================================== WRITING ANSWERS =============================================
+
+
 
     // Writing the final_rdd to answers.txt :
     // verify if foreach writes the rdd in the same order as it is stored
