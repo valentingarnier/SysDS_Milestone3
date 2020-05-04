@@ -232,14 +232,15 @@ object Milestone3 {
           val scheduler_info = schedulerLines.head
           //Application that are like app2 contains an error Utils with an uncaught exception task result getter
           //Which results from an error while transfering data from the driver and the executors
-          if (scheduler_info._3 == -1) {
-            if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
-              val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
-              errorInfo match {
-                case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
-              }
+
+          if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
+            val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
+            errorInfo match {
+              case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
             }
-            else if (driver.exists(_.contains("is bigger than spark.driver.maxResultSize"))) {
+          }
+          else if (scheduler_info._3 == -1) {
+            if (driver.exists(_.contains("is bigger than spark.driver.maxResultSize"))) {
               (4, exception, scheduler_info._1, scheduler_info._2)
             }
             else (8, exception, scheduler_info._1, scheduler_info._2)
@@ -282,9 +283,6 @@ object Milestone3 {
       val regex_gen(appId, appAttempt, container) = logInfo.head
       ((appId.toInt, appAttempt.toInt), container.toInt)
     }
-
-    val applogs_conf = new Configuration(sc.hadoopConfiguration)
-    applogs_conf.set("textinputformat.record.delimiter", "Container:")
 
     //Here we parse the big aggregated log file.
     sc.hadoopConfiguration.set("textinputformat.record.delimiter", "Container:")
