@@ -241,7 +241,7 @@ object Milestone3 {
           if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
             val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
             errorInfo match {
-              case("Log incomplete", _, _) => (9, "Error in driver", scheduler_info._1, scheduler_info._2)
+              case("Log incomplete", _, _) => (9, "ErrorDriver", scheduler_info._1, scheduler_info._2)
               case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
             }
           }
@@ -257,7 +257,7 @@ object Milestone3 {
             val failedExecutorLog = logs(scheduler_info._3 - 1)
             val errorInfo = errorInThread("ERROR Executor", appName, failedExecutorLog)
             errorInfo match {
-              case("Log incomplete", _, _) => (9, "Error in executor", scheduler_info._1, scheduler_info._2)
+              case("Log incomplete", _, _) => (9, "ErrorExecutor", scheduler_info._1, scheduler_info._2)
               case (errorType, -1, _) => (6, errorType, scheduler_info._1, scheduler_info._2) //Shuffling data (cat 6)
               case (errorType, codeLine, 1) => (6, errorType, scheduler_info._1, codeLine) //Error reading input inside executor (cat 6)
               case (errorType, codeLine, 0) => (5, errorType, scheduler_info._1, codeLine) //0 = scala problem inside executor -> cat 5
@@ -270,7 +270,7 @@ object Milestone3 {
           //Work with driverLog
           val errorInfo = errorInThread("ERROR ApplicationMaster", appName, driverLog)
           errorInfo match {
-            case("Log incomplete", _, _) => (9, "Error in driver", -1, -1)
+            case("Log incomplete", _, _) => (9, "ErrorDriver", -1, -1)
             case (errorType, codeLine, 1) => (7, errorType, -1, codeLine) //Spark operation in the driver
             case (errorType, codeLine, 0) => (3, errorType, -1, codeLine) //Non-spark java/scala code at the driver
             case ("org.apache.hadoop.mapred.InvalidInputException", codeLine, _) => (2, "org.apache.hadoop.mapred.InvalidInputException", -1, codeLine)
@@ -327,8 +327,8 @@ object Milestone3 {
 
     //Now rdd is ready to be joined with the RDD that we built in Milestone1 (allData) on (AppID, AppAttempt)
     //This is why it was important to keep AppAttempt
-    //val final_rdd = appInfos.join(errorCategories)
-    errorCategories.foreach(println)
+    val final_rdd: Array[((Int, Int), ((String, ((String, String), List[(Int, String)])), (Int, String, Int, Int)))] = appInfos.join(errorCategories).sortBy(_._1).collect()
+    //errorCategories.foreach(println)
 
 
 
@@ -340,16 +340,16 @@ object Milestone3 {
     // Writing the final_rdd to answers.txt :
     // verify if foreach writes the rdd in the same order as it is stored
     // verify if containers are sorted (if not, sort val containers)
-    /*val file = new File("answers.txt")
+    val file = new File("answers.txt")
     val bw = new BufferedWriter(new FileWriter(file))
 
     final_rdd.foreach{x =>
       val appId = x._1._1
       val appAttempt = x._1._2
       bw.write("AppAttempt : appattempt_1580812675067_" + f"${appId}%04d" + "_" + f"${appAttempt}%06d" + "\n")
-      bw.write("User : " + x._2._1 + "\n")
-      bw.write("StartTime : " + x._2._1._2._1 +"\n")
-      bw.write("EndTime : " + x._2._1._2._1 + "\n")
+      bw.write("User : " + x._2._1._1 + "\n")
+      bw.write("StartTime : " + x._2._1._2._1._1 +"\n")
+      bw.write("EndTime : " + x._2._1._2._1._2 + "\n")
       val containers = x._2._1._2._2.map{x =>
         "container_e02_1580812675067_" + f"${appId}%04d" + "_" + f"${appAttempt}%02d" + "_" + x._1 + " -> " + x._2 + "\n"}
       bw.write("Containers : " + containers.mkString(", ") + "\n")
@@ -357,9 +357,9 @@ object Milestone3 {
       bw.write("Exception : " + x._2._2._2 + "\n")
       bw.write("Stage : " + x._2._2._3 + "\n")
       bw.write("SourceCodeLine : " + x._2._2._4 + "\n")
-      bw.write("\n")
+      bw.write("\n\n")
     }
 
-    bw.close()*/
+    bw.close()
   }
 }
