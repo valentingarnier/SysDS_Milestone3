@@ -162,31 +162,36 @@ object Milestone3 {
      */
     def errorInThread(keyword: String, appName: String, txt: String): (String, Int, Int) = {
       //errorThread contains all lines that follow the keyword in txt (to examine the thread)
-      val errorThread = txt.split(keyword)(1).split("""\d{2}/\d{2}/\d{2}\s\d{2}:\d{2}:\d{2}""".r.toString())(0).split("\n").toList
-      //Format of a error thread always have the type of error as its second line (so second element in errorThread)
-      val errorType = errorThread.tail.head.split(":").head
+      val splitThread = txt.split(keyword)
+      if(splitThread.length == 1) {
+        ("Log incomplete", -1, -1)
+      }else{
+        val errorThread = splitThread(1).split("""\d{2}/\d{2}/\d{2}\s\d{2}:\d{2}:\d{2}""".r.toString())(0).split("\n").toList
+        //Format of a error thread always have the type of error as its second line (so second element in errorThread)
+        val errorType = errorThread.tail.head.split(":").head
 
-      val regex_codeLine = (""".+at\s""" + appName + """\$\$anonfun\$\d+\.apply\(""" + appName + """\.scala:(\d+)\)""").r
-      val regex_codeLine2 = (""".+at\s""" + appName + """\$\.main\(""" + appName + """\.scala:(\d+)\)""").r
-      val lineMatch = errorThread.filter(l => l.matches(regex_codeLine.toString()))
-      val lineMatch2 = errorThread.filter(l => l.matches(regex_codeLine2.toString()))
+        val regex_codeLine = (""".+at\s""" + appName + """\$\$anonfun\$\d+\.apply\(""" + appName + """\.scala:(\d+)\)""").r
+        val regex_codeLine2 = (""".+at\s""" + appName + """\$\.main\(""" + appName + """\.scala:(\d+)\)""").r
+        val lineMatch = errorThread.filter(l => l.matches(regex_codeLine.toString()))
+        val lineMatch2 = errorThread.filter(l => l.matches(regex_codeLine2.toString()))
 
-      //LineMatch2 is only here for error category 2 since it has a different format for spotting the problematic line.
-      lineMatch match {
-        case Nil => {
-          lineMatch2 match {
-            case Nil => (errorType, -1, -1)
-            case x :: tail => (errorType, parseCodeLine(x, regex_codeLine2), -1)
+        //LineMatch2 is only here for error category 2 since it has a different format for spotting the problematic line.
+        lineMatch match {
+          case Nil => {
+            lineMatch2 match {
+              case Nil => (errorType, -1, -1)
+              case x :: tail => (errorType, parseCodeLine(x, regex_codeLine2), -1)
+            }
           }
-        }
-        case x :: tail => {
-          val codeLine = parseCodeLine(x, regex_codeLine)
-          //To know whether the thread has a spark or scala/java error, we match the source and return the according digit (0 or 1).
-          val source = errorThread(errorThread.indexOf(x) - 1)
-          source match {
-            case u if u.contains("org.apache.spark") => (errorType, codeLine, 1)
-            case u if u.contains("scala.") => (errorType, codeLine, 0)
-            case _ => (errorType, codeLine, -1)
+          case x :: tail => {
+            val codeLine = parseCodeLine(x, regex_codeLine)
+            //To know whether the thread has a spark or scala/java error, we match the source and return the according digit (0 or 1).
+            val source = errorThread(errorThread.indexOf(x) - 1)
+            source match {
+              case u if u.contains("org.apache.spark") => (errorType, codeLine, 1)
+              case u if u.contains("scala.") => (errorType, codeLine, 0)
+              case _ => (errorType, codeLine, -1)
+            }
           }
         }
       }
@@ -236,6 +241,7 @@ object Milestone3 {
           if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
             val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
             errorInfo match {
+              case("Log incomplete", _, _) => (9, "Error in driver", scheduler_info._1, scheduler_info._2)
               case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
             }
           }
@@ -251,6 +257,7 @@ object Milestone3 {
             val failedExecutorLog = logs(scheduler_info._3 - 1)
             val errorInfo = errorInThread("ERROR Executor", appName, failedExecutorLog)
             errorInfo match {
+              case("Log incomplete", _, _) => (9, "Error in executor", scheduler_info._1, scheduler_info._2)
               case (errorType, -1, _) => (6, errorType, scheduler_info._1, scheduler_info._2) //Shuffling data (cat 6)
               case (errorType, codeLine, 1) => (6, errorType, scheduler_info._1, codeLine) //Error reading input inside executor (cat 6)
               case (errorType, codeLine, 0) => (5, errorType, scheduler_info._1, codeLine) //0 = scala problem inside executor -> cat 5
@@ -263,6 +270,7 @@ object Milestone3 {
           //Work with driverLog
           val errorInfo = errorInThread("ERROR ApplicationMaster", appName, driverLog)
           errorInfo match {
+            case("Log incomplete", _, _) => (9, "Error in driver", -1, -1)
             case (errorType, codeLine, 1) => (7, errorType, -1, codeLine) //Spark operation in the driver
             case (errorType, codeLine, 0) => (3, errorType, -1, codeLine) //Non-spark java/scala code at the driver
             case ("org.apache.hadoop.mapred.InvalidInputException", codeLine, _) => (2, "org.apache.hadoop.mapred.InvalidInputException", -1, codeLine)
