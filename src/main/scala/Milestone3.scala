@@ -81,7 +81,7 @@ object Milestone3 {
       .map{case (appId, appAttempt, date, finalStatus) => (appId, appAttempt) -> (date, finalStatus)}
 
     /*
-    First, we join exitCodes with endStatus so that we are sure to have app that failed with exit code non Null.
+    Firs(t, we join exitCodes with endStatus so that we are sure to have app that failed with exit code non Null.
     Next we don't need anymore the code and the status since we filtered with them
      */
     val endDates = exitCodes.join(endStatus)
@@ -121,23 +121,37 @@ object Milestone3 {
     /*
     Functions to parse the regex above and to return tuples
      */
-    def parseAppName(line: String): String = {
-      val regex_appName(appName) = line
-      appName
+    def parseAppName(line: List[String]): String = {
+      line match{
+        case Nil => ""
+        case x :: _ => {
+          val regex_appName(appName) = x
+          appName
+        }
+      }
     }
-    def parseErrAppMaster(line: String): String = {
-      val regex_error(exception) = line
-      exception
+    def parseErrAppMaster(line: List[String]): String = {
+      line match{
+        case Nil => "Exception"
+        case x :: _ => {
+          val regex_error(exception) = x
+          exception
+        }
+      }
     }
-    def parseScheduler(line: String): (Int, Int, Int) = {
-      val container = """.+container_e02_1580812675067_\d+_\d+_(\d{6}).+""".r
-      val regex_dag(stage, lineCode, logMessage) = line
-
-      if (line.matches(container.toString())) {
-        val container(executor) = logMessage
-        (stage.toInt, lineCode.toInt, executor.toInt)
-      } else {
-        (stage.toInt, lineCode.toInt, -1)
+    def parseScheduler(line: List[String]): (Int, Int, Int) = {
+      line match{
+        case Nil => (-1, -1, -1)
+        case x :: _ => {
+          val container = """.+container_e02_1580812675067_\d+_\d+_(\d{6}).+""".r
+          val regex_dag(stage, lineCode, logMessage) = x
+          if (x.matches(container.toString())) {
+            val container(executor) = logMessage
+            (stage.toInt, lineCode.toInt, executor.toInt)
+          } else {
+            (stage.toInt, lineCode.toInt, -1)
+          }
+        }
       }
     }
     /*
@@ -205,78 +219,65 @@ object Milestone3 {
     def getErrorInfos(logs: List[String]): (Int, String, Int, Int) = {
       //The log regarding the driver is always with ID 000001 and we sort it before calling the function
       val driver = logs.head.split('\n').toList
-      val list_exception = driver.filter(l => l.matches(regex_error.toString())).map(x => parseErrAppMaster(x))
+      val exception = parseErrAppMaster(driver.filter(l => l.matches(regex_error.toString())))
       //We noticed that for a few apps the exception is simply "Exception"
-      var exception = ""
 
-      if (list_exception.isEmpty) exception = "Exception"
-      else exception = list_exception.head
       //From here we start returning elements to print for each app
       if (exception == "java.lang.ClassNotFoundException") {
         //if category 1, nothing more to be done, no stage or line involved in this kind of error
         (1, exception, -1, -1)
       }
       else {
-        val list_app_name = driver.filter(l => l.matches(regex_appName.toString())).map(x => parseAppName(x))
+        val appName = parseAppName(driver.filter(l => l.matches(regex_appName.toString())))
+        val scheduler_info = parseScheduler(driver.filter(l => l.matches(regex_dag.toString())))
+        val isErrorUtils = driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))
 
-        //If we have a IllegalArgumentException we have no AppName so we need to parse it here.
-        if (list_app_name.isEmpty && exception == "java.lang.IllegalArgumentException") {
-          val regex_illegal = """.+at\s.+\$\.main\(.+\.scala:(\d+)\)""".r
-          val codeLine = parseCodeLine(driver.filter(_.matches(regex_illegal.toString())).head, regex_illegal)
-          return (9, exception, -1, codeLine)
-        }
-        else {
-          val appName = list_app_name.head
-          val schedulerLines = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x))
-          val apacheSparkException = exception == "org.apache.spark.SparkException" || schedulerLines.nonEmpty
-          //This IF separates spark related exceptions and non-spark ones.
-          if (apacheSparkException) {
-            /*Scheduler_info is codeLine and stage that appears in the driver (DAGScheduler).
-          If we have no codeLine error or stage in executors
-          We know we can return the ones present in the driver by order of priority.
-         */
-            val scheduler_info = schedulerLines.head
-            //Application that are like app2 contains an error Utils with an uncaught exception task result getter
-            //Which results from an error while transfering data from the driver and the executors
-            if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
-              val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
+        //Application that are like app2 contains an error Utils with an uncaught exception task result getter
+        //Which results from an error while transfering data from the driver and the executors
+        if (isErrorUtils) {
+          val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
+          errorInfo match {
+            case ("Log incomplete", _, _) => (9, "ErrorDriver", scheduler_info._1, scheduler_info._2)
+            case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2) //Returns info inside scheduler.
+          }
+        } // For App4, we need also to spot the spark.driver.maxResultSize
+        else if (exception == "java.lang.IllegalArgumentException" && appName==""){
+          val errorInfo = errorInThread("ERROR SparkContext", appName, logs.head)
+          (9, errorInfo._1, -1, errorInfo._2)
+        }else{
+
+          scheduler_info match {
+            //Now if the driver's failure is not a spark exception, no need to go inside executors we have all info inside the driverLog.
+            case (-1, -1, -1) => {
+              val driverLog = logs.head
+              //Work with driverLog
+              val errorInfo = errorInThread("ERROR ApplicationMaster", appName, driverLog)
               errorInfo match {
-                case ("Log incomplete", _, _) => (9, "ErrorDriver", scheduler_info._1, scheduler_info._2)
-                case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2) //Returns info inside scheduler.
+                case ("Log incomplete", _, _) => (9, "ErrorDriver", -1, -1)
+                case ("org.apache.hadoop.mapred.InvalidInputException", codeLine, _) => (2, "org.apache.hadoop.mapred.InvalidInputException", -1, codeLine)
+                case (errorType, codeLine, 1) => (7, errorType, -1, codeLine) //Spark operation in the driver
+                case (errorType, codeLine, 0) => (3, errorType, -1, codeLine) //Non-spark java/scala code at the driver
+                case (errorType, codeLine, _) => (9, errorType, -1, codeLine)
               }
             }
-            // For App4, we need also to spot the spark.driver.maxResultSize
-            else if (scheduler_info._3 == -1) {
+            case (stage, line, executor) if executor == -1 => {
               if (driver.exists(_.contains("is bigger than spark.driver.maxResultSize"))) {
-                (4, exception, scheduler_info._1, scheduler_info._2)
+                (4, exception, stage, line)
               }
               //Error category 8 is for spark error related with a problem in an executor but without specifying which.
-              else (8, exception, scheduler_info._1, scheduler_info._2)
+              else (8, exception, stage, line)
             }
-
             //If we have a spark exception and it is not a category 4, we know we have to go deep inside failed executor's log.
-            else {
+            case (stage, line, _) => {
               val failedExecutorLog = logs(scheduler_info._3 - 1)
               val errorInfo = errorInThread("ERROR Executor", appName, failedExecutorLog)
               errorInfo match {
-                case ("Log incomplete", _, _) => (9, "ErrorExecutor", scheduler_info._1, scheduler_info._2)
-                case (errorType, -1, _) => (6, errorType, scheduler_info._1, scheduler_info._2) //Shuffling data (cat 6)
-                case (errorType, codeLine, 1) => (6, errorType, scheduler_info._1, codeLine) //Error reading input inside executor (cat 6)
-                case (errorType, codeLine, 0) => (5, errorType, scheduler_info._1, codeLine) //0 = scala problem inside executor -> cat 5
-                case (errorType, codeLine, _) => (9, errorType, scheduler_info._1, codeLine) //Unknown
+                case ("Log incomplete", _, _) => (9, "ErrorExecutor", stage, line)
+                case (errorType, -1, _) => (6, errorType, stage, line) //Shuffling data (cat 6)
+                case (errorType, codeLine, 1) => (6, errorType, stage, codeLine) //Error reading input inside executor (cat 6)
+                case (errorType, codeLine, 0) => (5, errorType, stage, codeLine) //0 = scala problem inside executor -> cat 5
+                case (errorType, codeLine, _) => (9, errorType, stage, codeLine) //Unknown
               }
-            }
-            //Now if the driver's failure is not a spark exception, no need to go inside executors we have all info inside the driverLog.
-          } else {
-            val driverLog = logs.head
-            //Work with driverLog
-            val errorInfo = errorInThread("ERROR ApplicationMaster", appName, driverLog)
-            errorInfo match {
-              case ("Log incomplete", _, _) => (9, "ErrorDriver", -1, -1)
-              case (errorType, codeLine, 1) => (7, errorType, -1, codeLine) //Spark operation in the driver
-              case (errorType, codeLine, 0) => (3, errorType, -1, codeLine) //Non-spark java/scala code at the driver
-              case ("org.apache.hadoop.mapred.InvalidInputException", codeLine, _) => (2, "org.apache.hadoop.mapred.InvalidInputException", -1, codeLine)
-              case (errorType, codeLine, _) => (9, errorType, -1, codeLine)
             }
           }
         }
@@ -324,7 +325,7 @@ object Milestone3 {
       }
       //Here we have RDD[(AppID, AppAttempt), List(DriverLog, Executor1Log ...)]
       //Take only the ones who failed based on the driver
-      .filter(x => x._2.head.contains("INFO ApplicationMaster: Final app status: FAILED"))
+      .filter(x => !x._2.head.contains("INFO ApplicationMaster: Final app status: SUCCEEDED"))
       //Use our big functions above to gather all the required informations
       .map(x => x._1 -> getErrorInfos(x._2))
 
@@ -335,7 +336,6 @@ object Milestone3 {
 
 
     //====================================== WRITING ANSWERS =============================================
-
 
     // Writing the final_rdd to answers.txt :
     // verify if foreach writes the rdd in the same order as it is stored
@@ -350,6 +350,7 @@ object Milestone3 {
       bw.write("User : " + x._2._1._1 + "\n")
       bw.write("StartTime : " + x._2._1._2._1._1 +"\n")
       bw.write("EndTime : " + x._2._1._2._1._2 + "\n")
+      println(appId)
       val containers = x._2._1._2._2.map{x =>
         "container_e02_1580812675067_" + f"${appId}%04d" + "_" + f"${appAttempt}%02d" + "_" + x._1 + " -> " + x._2 + "\n"}
       bw.write("Containers : " + containers.mkString(", ") + "\n")
