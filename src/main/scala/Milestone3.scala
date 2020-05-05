@@ -1,10 +1,5 @@
 import java.io._
-
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.io.{LongWritable, Text}
-import org.apache.hadoop.mapred.TextInputFormat
 import org.apache.spark.{SparkConf, SparkContext}
-
 import scala.util.matching.Regex
 
 object Milestone3 {
@@ -211,13 +206,12 @@ object Milestone3 {
       //The log regarding the driver is always with ID 000001 and we sort it before calling the function
       val driver = logs.head.split('\n').toList
       val list_exception = driver.filter(l => l.matches(regex_error.toString())).map(x => parseErrAppMaster(x))
+      //We noticed that for a few apps the exception is simply "Exception"
       var exception = ""
 
       if (list_exception.isEmpty) exception = "Exception"
       else exception = list_exception.head
-      /*From here we start returning elements to print for each app
-
-       */
+      //From here we start returning elements to print for each app
       if (exception == "java.lang.ClassNotFoundException") {
         //if category 1, nothing more to be done, no stage or line involved in this kind of error
         (1, exception, -1, -1)
@@ -225,12 +219,12 @@ object Milestone3 {
       else {
         val list_app_name = driver.filter(l => l.matches(regex_appName.toString())).map(x => parseAppName(x))
 
+        //If we have a IllegalArgumentException we have no AppName so we need to parse it here.
         if (list_app_name.isEmpty && exception == "java.lang.IllegalArgumentException") {
           val regex_illegal = """.+at\s.+\$\.main\(.+\.scala:(\d+)\)""".r
           val codeLine = parseCodeLine(driver.filter(_.matches(regex_illegal.toString())).head, regex_illegal)
           return (9, exception, -1, codeLine)
         }
-
         else {
           val appName = list_app_name.head
           val schedulerLines = driver.filter(l => l.matches(regex_dag.toString())).map(x => parseScheduler(x))
@@ -244,18 +238,19 @@ object Milestone3 {
             val scheduler_info = schedulerLines.head
             //Application that are like app2 contains an error Utils with an uncaught exception task result getter
             //Which results from an error while transfering data from the driver and the executors
-
             if (driver.exists(_.contains("ERROR Utils: Uncaught exception in thread task-result-getter-"))) {
               val errorInfo = errorInThread("ERROR Utils: Uncaught exception in thread task-result-getter-", appName, logs.head)
               errorInfo match {
                 case ("Log incomplete", _, _) => (9, "ErrorDriver", scheduler_info._1, scheduler_info._2)
-                case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2)
+                case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2) //Returns info inside scheduler.
               }
             }
+            // For App4, we need also to spot the spark.driver.maxResultSize
             else if (scheduler_info._3 == -1) {
               if (driver.exists(_.contains("is bigger than spark.driver.maxResultSize"))) {
                 (4, exception, scheduler_info._1, scheduler_info._2)
               }
+              //Error category 8 is for spark error related with a problem in an executor but without specifying which.
               else (8, exception, scheduler_info._1, scheduler_info._2)
             }
 
@@ -336,17 +331,16 @@ object Milestone3 {
     //Now rdd is ready to be joined with the RDD that we built in Milestone1 (allData) on (AppID, AppAttempt)
     //This is why it was important to keep AppAttempt
     val final_rdd = appInfos.join(errorCategories).sortBy(_._1).collect()
-    errorCategories.foreach(println)
+    //errorCategories.foreach(println)
 
 
     //====================================== WRITING ANSWERS =============================================
 
 
-
     // Writing the final_rdd to answers.txt :
     // verify if foreach writes the rdd in the same order as it is stored
     // verify if containers are sorted (if not, sort val containers)
-    /*val file = new File("answers.txt")
+    val file = new File("answers.txt")
     val bw = new BufferedWriter(new FileWriter(file))
 
     final_rdd.foreach{x =>
@@ -366,6 +360,6 @@ object Milestone3 {
       bw.write("\n\n")
     }
 
-    bw.close()*/
+    bw.close()
   }
 }
