@@ -253,7 +253,7 @@ object Milestone3 {
               //Work with driverLog
               val errorInfo = errorInThread("ERROR ApplicationMaster", appName, driverLog)
               errorInfo match {
-                case ("Log incomplete", _, _) => (9, "ErrorDriver", -1, -1)
+                case ("Log incomplete", _, _) => (9, "ErrorDriver", -1, -1) //No spark exception
                 case ("org.apache.hadoop.mapred.InvalidInputException", codeLine, _) => (2, "org.apache.hadoop.mapred.InvalidInputException", -1, codeLine)
                 case (errorType, codeLine, 1) => (7, errorType, -1, codeLine) //Spark operation in the driver
                 case (errorType, codeLine, 0) => (3, errorType, -1, codeLine) //Non-spark java/scala code at the driver
@@ -272,7 +272,7 @@ object Milestone3 {
               val failedExecutorLog = logs(scheduler_info._3 - 1)
               val errorInfo = errorInThread("ERROR Executor", appName, failedExecutorLog)
               errorInfo match {
-                case ("Log incomplete", _, _) => (9, "ErrorExecutor", stage, line)
+                case ("Log incomplete", _, _) => (8, exception, stage, line)
                 case (errorType, -1, _) => (6, errorType, stage, line) //Shuffling data (cat 6)
                 case (errorType, codeLine, 1) => (6, errorType, stage, codeLine) //Error reading input inside executor (cat 6)
                 case (errorType, codeLine, 0) => (5, errorType, stage, codeLine) //0 = scala problem inside executor -> cat 5
@@ -350,7 +350,6 @@ object Milestone3 {
       bw.write("User : " + x._2._1._1 + "\n")
       bw.write("StartTime : " + x._2._1._2._1._1 +"\n")
       bw.write("EndTime : " + x._2._1._2._1._2 + "\n")
-      println(appId)
       val containers = x._2._1._2._2.map{x =>
         "container_e02_1580812675067_" + f"${appId}%04d" + "_" + f"${appAttempt}%02d" + "_" + x._1 + " -> " + x._2 + "\n"}
       bw.write("Containers : " + containers.mkString(", ") + "\n")
