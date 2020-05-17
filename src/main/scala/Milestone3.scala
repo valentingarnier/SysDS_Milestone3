@@ -4,7 +4,7 @@ import scala.util.matching.Regex
 
 object Milestone3 {
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf().setMaster("local[*]").setAppName("Milestone3") //For cluster
+    val conf = new SparkConf().setMaster("local").setAppName("Milestone3") //For cluster
     val sc = SparkContext.getOrCreate(conf)
 
     val resourceManager = args(0)
@@ -240,10 +240,10 @@ object Milestone3 {
             case ("Log incomplete", _, _) => (9, "ErrorDriver", scheduler_info._1, scheduler_info._2)
             case (errorType, _, _) => (4, errorType, scheduler_info._1, scheduler_info._2) //Returns info inside scheduler.
           }
-        } // For App4, we need also to spot the spark.driver.maxResultSize
+        }
         else if (exception == "java.lang.IllegalArgumentException" && appName==""){
           val errorInfo = errorInThread("ERROR SparkContext", appName, logs.head)
-          (9, errorInfo._1, -1, errorInfo._2)
+          (1, errorInfo._1, -1, errorInfo._2)
         }else{
 
           scheduler_info match {
@@ -260,6 +260,7 @@ object Milestone3 {
                 case (errorType, codeLine, _) => (9, errorType, -1, codeLine)
               }
             }
+            // For App4, we need also to spot the spark.driver.maxResultSize
             case (stage, line, executor) if executor == -1 => {
               if (driver.exists(_.contains("is bigger than spark.driver.maxResultSize"))) {
                 (4, exception, stage, line)
@@ -361,5 +362,6 @@ object Milestone3 {
     }
 
     bw.close()
+    sc.stop()
   }
 }

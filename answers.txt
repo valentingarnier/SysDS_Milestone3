@@ -1,0 +1,112 @@
+AppAttempt : appattempt_1580812675067_5020_000001
+User : basil
+StartTime : 2020-04-07 15:24:47,365
+EndTime : 2020-04-07 15:26:23,585
+Containers : container_e02_1580812675067_5020_01_1 -> iccluster055.iccluster.epfl.ch
+, container_e02_1580812675067_5020_01_2 -> iccluster060.iccluster.epfl.ch
+, container_e02_1580812675067_5020_01_3 -> iccluster063.iccluster.epfl.ch
+
+ErrorCategory : 6
+Exception : java.lang.OutOfMemoryError
+Stage : 0
+SourceCodeLine : 23
+
+
+AppAttempt : appattempt_1580812675067_5021_000001
+User : basil
+StartTime : 2020-04-07 15:27:00,254
+EndTime : 2020-04-07 15:30:54,676
+Containers : container_e02_1580812675067_5021_01_1 -> iccluster063.iccluster.epfl.ch
+, container_e02_1580812675067_5021_01_2 -> iccluster061.iccluster.epfl.ch
+, container_e02_1580812675067_5021_01_3 -> iccluster060.iccluster.epfl.ch
+
+ErrorCategory : 4
+Exception : java.lang.OutOfMemoryError
+Stage : 0
+SourceCodeLine : 23
+
+
+AppAttempt : appattempt_1580812675067_5022_000001
+User : basil
+StartTime : 2020-04-07 15:53:57,629
+EndTime : 2020-04-07 15:57:11,676
+Containers : container_e02_1580812675067_5022_01_1 -> iccluster063.iccluster.epfl.ch
+, container_e02_1580812675067_5022_01_2 -> iccluster056.iccluster.epfl.ch
+, container_e02_1580812675067_5022_01_3 -> iccluster061.iccluster.epfl.ch
+
+ErrorCategory : 3
+Exception : java.lang.OutOfMemoryError
+Stage : -1
+SourceCodeLine : 22
+
+
+AppAttempt : appattempt_1580812675067_5023_000001
+User : basil
+StartTime : 2020-04-07 15:58:18,644
+EndTime : 2020-04-07 15:59:32,625
+Containers : container_e02_1580812675067_5023_01_1 -> iccluster056.iccluster.epfl.ch
+, container_e02_1580812675067_5023_01_2 -> iccluster057.iccluster.epfl.ch
+, container_e02_1580812675067_5023_01_3 -> iccluster056.iccluster.epfl.ch
+
+ErrorCategory : 4
+Exception : org.apache.spark.SparkException
+Stage : 0
+SourceCodeLine : 24
+
+
+AppAttempt : appattempt_1580812675067_5024_000001
+User : basil
+StartTime : 2020-04-07 16:00:17,379
+EndTime : 2020-04-07 16:01:59,246
+Containers : container_e02_1580812675067_5024_01_1 -> iccluster055.iccluster.epfl.ch
+, container_e02_1580812675067_5024_01_2 -> iccluster057.iccluster.epfl.ch
+, container_e02_1580812675067_5024_01_3 -> iccluster056.iccluster.epfl.ch
+
+ErrorCategory : 5
+Exception : java.lang.OutOfMemoryError
+Stage : 0
+SourceCodeLine : 23
+
+
+AppAttempt : appattempt_1580812675067_5025_000001
+User : basil
+StartTime : 2020-04-07 16:02:33,546
+EndTime : 2020-04-07 16:10:40,289
+Containers : container_e02_1580812675067_5025_01_1 -> iccluster056.iccluster.epfl.ch
+, container_e02_1580812675067_5025_01_2 -> iccluster056.iccluster.epfl.ch
+, container_e02_1580812675067_5025_01_3 -> iccluster061.iccluster.epfl.ch
+
+ErrorCategory : 8
+Exception : org.apache.spark.SparkException
+Stage : 1
+SourceCodeLine : 25
+
+
+AppAttempt : appattempt_1580812675067_5026_000001
+User : basil
+StartTime : 2020-04-07 16:12:01,368
+EndTime : 2020-04-07 16:19:12,157
+Containers : container_e02_1580812675067_5026_01_1 -> iccluster056.iccluster.epfl.ch
+, container_e02_1580812675067_5026_01_2 -> iccluster060.iccluster.epfl.ch
+, container_e02_1580812675067_5026_01_3 -> iccluster063.iccluster.epfl.ch
+
+ErrorCategory : 6
+Exception : java.lang.OutOfMemoryError
+Stage : 2
+SourceCodeLine : 25
+
+
+AppAttempt : appattempt_1580812675067_5027_000001
+User : basil
+StartTime : 2020-04-07 16:19:53,321
+EndTime : 2020-04-07 16:29:04,864
+Containers : container_e02_1580812675067_5027_01_1 -> iccluster061.iccluster.epfl.ch
+, container_e02_1580812675067_5027_01_2 -> iccluster056.iccluster.epfl.ch
+, container_e02_1580812675067_5027_01_3 -> iccluster061.iccluster.epfl.ch
+
+ErrorCategory : 6
+Exception : java.lang.OutOfMemoryError
+Stage : 1
+SourceCodeLine : 21
+
+
